@@ -11,8 +11,7 @@ use App\Entity\SPStudentAssignment;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\Routing\Annotation\Route;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,24 +22,20 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class SPReportController extends AbstractController
 {
-
-    public function __construct(RequestStack $requestStack, EntityManagerInterface $em)
-    {
-        $this->requestStack = $requestStack;
-        $this->em = $em;
-    }
-
-    #[Route('sp_footer/set_the_footer',name:'sp_footer')]
+    /**
+     * @Route("sp_footer/set_the_footer", name="sp_footer")
+     */
     public function set_the_footer()
     {
         return $this->render('sp/reports/sp_footer.html.twig');
     }
 
-
-    #[Route('sp/tutors/{tutor_id}/reports/{tag_id}')]
+    /**
+     * @Route("sp/tutors/{tutor_id}/reports/{tag_id}")
+     */
     public function generate_sp_tutor_report($tutor_id, $tag_id, EntityManagerInterface $em)
     {
-        $session = $this->requestStack->getSession();
+        $session = $this->get('session');
 
         $ay = $session->get('academic_year');
 
@@ -57,7 +52,7 @@ class SPReportController extends AbstractController
 
         if ($tag_id<0)
         {
-            $placement = new SPPlacement($this->requestStack, $em);
+            $placement = new SPPlacement();
             if ($tag_id==-1) $placement->setPlacementName("Autumn Placements");
             if ($tag_id==-2) $placement->setPlacementName("Spring Placements");
             if ($tag_id==-3) $placement->setPlacementName("Repeat/Deferred Placements");
@@ -127,11 +122,13 @@ class SPReportController extends AbstractController
         return new Response($html);
     }
 
+    /**
+     * @Route("sp/tutors/{tutor_id}/reports/{tag_id}/download")
+     */
 
-    #[Route('sp/tutors/{tutor_id}/reports/{tag_id}/download')]
     public function download_sp_tutor_report($tutor_id, $tag_id, EntityManagerInterface $em,\Knp\Snappy\Pdf $snappy)
     {
-        $session = $this->requestStack->getSession();
+        $session = $this->get('session');
 
         $ay = $session->get('academic_year');
 
@@ -148,7 +145,7 @@ class SPReportController extends AbstractController
 
         if ($tag_id<0)
         {
-            $placement = new SPPlacement($this->requestStack, $em);
+            $placement = new SPPlacement();
             if ($tag_id==-1) $placement->setPlacementName("Autumn Placements");
             if ($tag_id==-2) $placement->setPlacementName("Spring Placements");
             if ($tag_id==-3) $placement->setPlacementName("Repeat/Deferred Placements");
@@ -314,7 +311,7 @@ class SPReportController extends AbstractController
 
     public function server_sp_tutor_report($tutor_id, $tag_id, EntityManagerInterface $em,\Knp\Snappy\Pdf $snappy)
     {
-        $session = $this->requestStack->getSession();
+        $session = $this->get('session');
 
         $ay = $session->get('academic_year');
 
@@ -331,7 +328,7 @@ class SPReportController extends AbstractController
 
         if ($tag_id<0)
         {
-            $placement = new SPPlacement($this->requestStack, $em);
+            $placement = new SPPlacement();
             if ($tag_id==-1) $placement->setPlacementName("Autumn Placements");
             if ($tag_id==-2) $placement->setPlacementName("Spring Placements");
             if ($tag_id==-3) $placement->setPlacementName("Repeat/Deferred Placements");
@@ -496,7 +493,7 @@ class SPReportController extends AbstractController
 
     public function server_sp_school_report($school_id, $period_id, EntityManagerInterface $em,\Knp\Snappy\Pdf $snappy)
     {
-        $session = $this->requestStack->getSession();
+        $session = $this->get('session');
 
         $ay = $session->get('academic_year');
 
@@ -620,8 +617,9 @@ class SPReportController extends AbstractController
         return $fname;
     }
 
-
-    #[Route('sp/mailing/schools')]
+    /**
+     * @Route("sp/mailing/schools")
+     */
     public function mail_schools(EntityManagerInterface $em,\Knp\Snappy\Pdf $snappy,MailerInterface $mailer)
     {
         $period = $_POST['period'];
@@ -629,7 +627,7 @@ class SPReportController extends AbstractController
         $target_school=$_POST['school'];
 
 
-        $session = $this->requestStack->getSession();
+        $session = $this->get('session');
 
         $tags_repository=$em->getRepository(SPTag::class);
         $assg_repository=$em->getRepository(SPStudentAssignment::class);
@@ -674,7 +672,7 @@ class SPReportController extends AbstractController
 
 
 
-            $comms = new CommsController($this->requestStack, $em, $mailer);
+            $comms = new CommsController();
             $comms->send_email(1,"deirdre.nimhurchu@mie.ie",$subj,"","",$att,$mailer,$em);
             //$comms->send_email(1,"piotr.korta@mie.ie",$subj,"","",$att,$mailer,$em);
         }
@@ -684,8 +682,9 @@ class SPReportController extends AbstractController
         return new Response("OK");
     }
 
-
-    #[Route('sp/mailing/tutors')]
+    /**
+     * @Route("sp/mailing/tutors")
+     */
     public function mail_tutors(EntityManagerInterface $em,\Knp\Snappy\Pdf $snappy,MailerInterface $mailer)
     {
 
@@ -693,7 +692,7 @@ class SPReportController extends AbstractController
         $target_tutor=$_POST['tutor'];
 
 
-        $session = $this->requestStack->getSession();
+        $session = $this->get('session');
 
         $tags_repository=$em->getRepository(SPTag::class);
         $assg_repository=$em->getRepository(SPStudentAssignment::class);
@@ -741,7 +740,7 @@ class SPReportController extends AbstractController
             }
 
 
-            $comms = new CommsController($this->requestStack, $em, $mailer);
+            $comms = new CommsController();
             $comms->send_email(1,"deirdre.nimhurchu@mie.ie",$subj,"","",$att,$mailer,$em);
             //$comms->send_email(1,"xinhao.chen@mie.ie",$subj,"","",$att,$mailer,$em);
             //$comms->send_email(1,"piotr.korta@mie.ie",$subj,"","",$att,$mailer,$em);
@@ -753,8 +752,9 @@ class SPReportController extends AbstractController
     }
 
 
-
-    #[Route('sp/ftest')]
+    /**
+     * @Route("sp/ftest")
+     */
     public function ftest(EntityManagerInterface $em,\Knp\Snappy\Pdf $snappy,MailerInterface $mailer)
     {
         $att=array();
@@ -763,7 +763,7 @@ class SPReportController extends AbstractController
 
         //dd($att);
 
-        $comms = new CommsController($this->requestStack, $em, $mailer);
+        $comms = new CommsController();
 
         $comms->send_email(1,"piotr.korta@mie.ie","TEST SP","MSG CONTENT","",$att,$mailer,$em);
 
@@ -771,11 +771,12 @@ class SPReportController extends AbstractController
     }
 
 
-
-    #[Route('sp/tutors/{tutor_id}/reports/{tag_id}/store')]
+    /**
+     * @Route("sp/tutors/{tutor_id}/reports/{tag_id}/store")
+     */
     function store_sp_tutor_report($tutor_id, $tag_id,EntityManagerInterface $em,ParameterBagInterface $params)
     {
-        $session = $this->requestStack->getSession();
+        $session = $this->get('session');
 
         $ay = $session->get('academic_year');
 
@@ -784,7 +785,7 @@ class SPReportController extends AbstractController
         $filter['sp_assignment_academic_year']=$ay;
         if ($tag_id>0) $filter['sp_assignment_tag']=$tag_id;
         $allocations = $repository->findBy($filter,['sp_assignment_school'=>'ASC']);
-        $pdf = new PDFController($this->requestStack, $em);
+        $pdf = new PDFController();
         foreach ($allocations as $k=>$a) //FILTER DOWN THE ALLOCATIONS
         {
             $tutors = $a->getSpAssignmentTutors();
@@ -801,11 +802,13 @@ class SPReportController extends AbstractController
         return new Response("OK");
     }
 
+    /**
+     * @Route("sp/schools/{school_id}/reports/{period_id}/download")
+     */
 
-    #[Route('sp/schools/{school_id}/reports/{period_id}/download')]
     public function download_sp_school_report($school_id, $period_id, EntityManagerInterface $em,\Knp\Snappy\Pdf $snappy)
     {
-        $session = $this->requestStack->getSession();
+        $session = $this->get('session');
 
         $ay = $session->get('academic_year');
 
@@ -906,7 +909,7 @@ class SPReportController extends AbstractController
 
         $html=$this->renderView('sp/reports/sp_school_report.html.twig',['allocations'=>$allocations,'unallocated'=>$empty_allocations,'school'=>$school,'period'=>$period_id, 'period_name'=>$period_name, 'ay'=>$ay]);
 
-        //$snappy->setBinary('/usr/local/bin/wkhtmltopdf');
+        $snappy->setBinary('/usr/local/bin/wkhtmltopdf');
         $snappy->setOption('orientation', 'portrait');
         $snappy->setOption('enable-local-file-access',true);
 
@@ -919,11 +922,13 @@ class SPReportController extends AbstractController
         );
     }
 
+    /**
+     * @Route("sp/schools/{school_id}/reports/{period_id}")
+     */
 
-    #[Route('sp/schools/{school_id}/reports/{period_id}')]
     public function generate_sp_school_report($school_id, $period_id, EntityManagerInterface $em)
     {
-        $session = $this->requestStack->getSession();
+        $session = $this->get('session');
 
         $ay = $session->get('academic_year');
 
@@ -981,11 +986,13 @@ class SPReportController extends AbstractController
     }
 
 
+    /**
+     * @Route("sp/finance_report/{period_id}")
+     */
 
-    #[Route('sp/finance_report/{period_id}')]
     public function finance_sp_report($period_id, EntityManagerInterface $em)
     {
-        $session = $this->requestStack->getSession();
+        $session = $this->get('session');
 
         $users = $em->getRepository(User::class);
 
@@ -1025,14 +1032,17 @@ class SPReportController extends AbstractController
 
 
 
-    #[Route('sp/documents')]
+    /**
+     * @Route("sp/documents")
+     */
     public function render_sp_documents(EntityManagerInterface $em)
     {
         return $this->render('sp/school_placement_files.html.twig');
     }
 
-
-    #[Route('sp/test_pdf')]
+    /**
+     * @Route("sp/test_pdf")
+     */
     public function test_pdf(EntityManagerInterface $em, \Knp\Snappy\Pdf $snappy)
     {
         $html=$this->renderView('test.html.twig');
