@@ -170,6 +170,7 @@
         <span class="cartTitlePrice">￥0.00</span>
         <button class="createOrderButton" style="background-color: rgb(170, 170, 170);" disabled="disabled">结 算</button>
     </div>
+
     <div class="cartProductList">
         <table class="cartProductTable">
             <thead>
@@ -263,6 +264,7 @@
             </tbody>
         </table>
     </div>
+
     <div class="cartFoot">
         <img src="https://how2j.cn/tmall/img/site/cartNotSelected.png" class="selectAllItem" selectit="false">
         <span>全选</span>
@@ -275,6 +277,163 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Public functions
+    function formatMoney(num) {
+        num = num.toString().replace(/\$|\,/g,'');
+        if(isNaN(num))
+            num = "0";
+        sign = (num == (num = Math.abs(num)));
+        num = Math.floor(num*100+0.50000000001);
+        cents = num%100;
+        num = Math.floor(num/100).toString();
+
+        if(cents<10)
+            cents = "0" + cents;
+
+        for (var i = 0; i < Math.floor((num.length-(1+i))/3); i++) {
+            num = num.substring(0,num.length-(4*i+3))+','+num.substring(num.length-(4*i+3));
+        }
+
+        return (((sign)?'':'-') + num + '.' + cents);
+    }
+
+    function syncCreateOrderButton() {
+        var anySelected = false;
+
+        $(".cartProductItemIfSelected").each(function (){
+            if ("selecit"==$(this).attr("selecit")){
+                anySelected = true;
+            }
+        });
+
+        if (anySelected){
+            $("button.createOrderButton").css("background-color","#C40000");
+            $("button.createOrderButton").removeAttr("disabled");
+        }
+        else{
+            $("button.createOrderButton").css("background-color","#AAAAAA");
+            $("button.createOrderButton").attr("disabled","disabled");
+        }
+    }
+
+    function syncSelect(){
+        var allSelected = true;
+        $(".cartProductItemIfSelected").each(function(){
+            if("false"==$(this).attr("selectit")){
+                allSelected = false;
+            }
+        });
+        if(allSelected)
+            $("img.selectAllItem").attr("src","https://how2j.cn/tmall/img/site/cartSelected.png");
+        else
+            $("img.selectAllItem").attr("src","https://how2j.cn/tmall/img/site/cartNotSelected.png");
+    }
+
+    function calcCartSumPriceAndNumber(){
+        var sum = 0;
+        var totalNumber = 0;
+        $("img.cartProductItemIfSelected[selectit='selectit']").each(function(){
+            var oiid = $(this).attr("oiid");
+            var price =$(".cartProductItemSmallSumPrice[oiid="+oiid+"]").text();
+            price = price.replace(/,/g, "");
+            price = price.replace(/￥/g, "");
+            sum += new Number(price);
+            var num =$(".orderItemNumberSetting[oiid="+oiid+"]").val();
+            totalNumber += new Number(num);
+        });
+        $("span.cartSumPrice").html("￥"+formatMoney(sum));
+        $("span.cartTitlePrice").html("￥"+formatMoney(sum));
+        $("span.cartSumNumber").html(totalNumber);
+    }
+
+    function syncPrice(pid,num,price){
+        $(".orderItemNumberSetting[pid="+pid+"]").val(num);
+        var cartProductItemSmallSumPrice = formatMoney(num*price);
+        $(".cartProductItemSmallSumPrice[pid="+pid+"]").html("￥"+cartProductItemSmallSumPrice);
+        calcCartSumPriceAndNumber();
+    }
+
+    // Action Listener
+    $("img.cartProductItemIfSelected").click(function (){
+        var selectit = $(this).attr("selectit");
+        if("selectit"==selectit){
+            $(this).attr("src","https://how2j.cn/tmall/img/site/cartNotSelected.png");
+            $(this).attr("selectit","false")
+            $(this).parents("tr.cartProductItemTR").css("background-color","#fff");
+        }
+        else{
+            $(this).attr("src","https://how2j.cn/tmall/img/site/cartSelected.png");
+            $(this).attr("selectit","selectit")
+            $(this).parents("tr.cartProductItemTR").css("background-color","#FFF8E1");
+        }
+        syncSelect();
+        syncCreateOrderButton();
+        calcCartSumPriceAndNumber();
+    });
+
+    $("img.selectAllItem").click(function(){
+        var selectit = $(this).attr("selectit")
+        if("selectit"==selectit){
+            $("img.selectAllItem").attr("src","https://how2j.cn/tmall/img/site/cartNotSelected.png");
+            $("img.selectAllItem").attr("selectit","false")
+            $(".cartProductItemIfSelected").each(function(){
+                $(this).attr("src","https://how2j.cn/tmall/img/site/cartNotSelected.png");
+                $(this).attr("selectit","false");
+                $(this).parents("tr.cartProductItemTR").css("background-color","#fff");
+            });
+        }
+        else{
+            $("img.selectAllItem").attr("src","https://how2j.cn/tmall/img/site/cartSelected.png");
+            $("img.selectAllItem").attr("selectit","selectit")
+            $(".cartProductItemIfSelected").each(function(){
+                $(this).attr("src","https://how2j.cn/tmall/img/site/cartSelected.png");
+                $(this).attr("selectit","selectit");
+                $(this).parents("tr.cartProductItemTR").css("background-color","#FFF8E1");
+            });
+        }
+        syncCreateOrderButton();
+        calcCartSumPriceAndNumber();
+    });
+
+    $(".numberPlus").click(function(){
+        var pid=$(this).attr("pid");
+        var stock= $("span.orderItemStock[pid="+pid+"]").text();
+        var price= $("span.orderItemPromotePrice[pid="+pid+"]").text();
+        var num= $(".orderItemNumberSetting[pid="+pid+"]").val();
+        num++;
+        if(num>stock)
+            num = stock;
+        syncPrice(pid,num,price);
+    });
+    $(".numberMinus").click(function(){
+        var pid=$(this).attr("pid");
+        var stock= $("span.orderItemStock[pid="+pid+"]").text();
+        var price= $("span.orderItemPromotePrice[pid="+pid+"]").text();
+        var num= $(".orderItemNumberSetting[pid="+pid+"]").val();
+        --num;
+        if(num<=0)
+            num=1;
+        syncPrice(pid,num,price);
+    });
+
+
+    $(".orderItemNumberSetting").keyup(function(){
+        var pid=$(this).attr("pid");
+        var stock= $("span.orderItemStock[pid="+pid+"]").text();
+        var price= $("span.orderItemPromotePrice[pid="+pid+"]").text();
+        var num= $(".orderItemNumberSetting[pid="+pid+"]").val();
+        num = parseInt(num);
+        if(isNaN(num))
+            num= 1;
+        if(num<=0)
+            num = 1;
+        if(num>stock)
+            num = stock;
+        syncPrice(pid,num,price);
+    });
+</script>
 </body>
 
 
