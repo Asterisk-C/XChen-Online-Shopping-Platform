@@ -1,0 +1,22 @@
+<html>
+<button id="b1">Hide Div</button>
+<button class="b2">Show Div</button>
+
+<div id="hello">Hello world</div>
+
+<script src="https://how2j.cn/study/jquery.min.js"></script>
+
+<script>
+    $(function (){
+        $("#b1").click(function (){
+            $("#hello").hide();
+        });
+    });
+
+    $(function (){
+        $(".b2").click(function (){
+            $("#hello").show();
+        });
+    });
+</script>
+</html>
